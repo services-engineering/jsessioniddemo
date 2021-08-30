@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: jsessionid-demo
+  name: jsessionid-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: jsessionid-demo
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: jsessionid-demo
+    spec:
+      containers:
+      - image: servicesengineering/jsessionid-demo:0.3
+        name: jsessionid-demo
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /getsession?simulateTimeout=true
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 3
+        resources: {}
+status: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: jsessionid-demo-service
+  annotations:
+    traefik.ingress.kubernetes.io/affinity: "true"
+spec:
+  type: ClusterIP
+  selector:
+    app: jsessionid-demo
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: traefik
+  labels:
+    app: jsessionid-demo
+  name: jsessionid-demo-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /getsession
+        pathType: Prefix
+        backend:
+          service: 
+            name: jsessionid-demo-service
+            port: 
+              number: 8080

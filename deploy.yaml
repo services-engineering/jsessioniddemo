@@ -66,9 +66,10 @@ metadata:
   name: jsessionid-demo-ingress
 spec:
   rules:
-  - http:
+  - host: session.kube.pro
+    http:
       paths:
-      - path: /getsession
+      - path: /
         pathType: Prefix
         backend:
           service: 
